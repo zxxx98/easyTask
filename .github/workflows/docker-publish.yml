@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/easytask
 
 jobs:
   build:
@@ -34,7 +34,9 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
+          tags: |            
+            type=raw,value=latest
+            type=sha,format=long
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
