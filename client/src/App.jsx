@@ -5,6 +5,9 @@ import ScriptList from './pages/ScriptList'
 import ScriptEdit from './pages/ScriptEdit'
 import ScriptCreate from './pages/ScriptCreate'
 import PackageManager from './pages/PackageManager'
+import UtilList from './pages/UtilList'
+import UtilCreate from './pages/UtilCreate'
+import UtilEdit from './pages/UtilEdit'
 
 function App() {
   return (
@@ -14,6 +17,9 @@ function App() {
         <Route path="scripts/new" element={<ScriptCreate />} />
         <Route path="scripts/:id" element={<ScriptEdit />} />
         <Route path="packages" element={<PackageManager />} />
+        <Route path="utils" element={<UtilList />} />
+        <Route path="utils/new" element={<UtilCreate />} />
+        <Route path="utils/:name" element={<UtilEdit />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

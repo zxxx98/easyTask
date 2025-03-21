@@ -9,6 +9,8 @@ const { VM } = require('vm2');
 const { WebSocketServer } = require('ws');
 const http = require('http');
 const packagesRouter = require('./api/packages');
+const utilsRouter = require('./api/utils');
+const { UTILS_DIR } = require('../utils');
 
 // 初始化应用
 const app = express();
@@ -24,6 +26,9 @@ app.use(bodyParser.json());
 // 注册包管理API路由
 app.use('/api/packages', packagesRouter);
 
+// 注册通用脚本API路由
+app.use('/api/utils', utilsRouter);
+
 // 确保脚本目录存在
 const SCRIPTS_DIR = path.join(__dirname, '../scripts');
 fs.ensureDirSync(SCRIPTS_DIR);
@@ -33,13 +38,11 @@ const runningTasks = {};
 const tempScripts = {};
 
 // 加载并启动所有脚本
-function loadAndStartAllScripts()
-{
+function loadAndStartAllScripts() {
     try {
         const scripts = fs.readdirSync(SCRIPTS_DIR).filter(file => file.endsWith('.js'));
 
-        scripts.forEach(scriptFile =>
-        {
+        scripts.forEach(scriptFile => {
             const scriptPath = path.join(SCRIPTS_DIR, scriptFile);
             const scriptContent = fs.readFileSync(scriptPath, 'utf8');
 
@@ -68,8 +71,7 @@ function loadAndStartAllScripts()
 }
 
 // 启动一个脚本
-function startScript(scriptName, schedule, scriptContent)
-{
+function startScript(scriptName, schedule, scriptContent) {
     try {
         // 如果任务已经在运行，先停止它
         if (runningTasks[scriptName]) {
@@ -78,14 +80,13 @@ function startScript(scriptName, schedule, scriptContent)
         }
 
         // 创建新的定时任务
-        const task = cron.schedule(schedule, () =>
-        {
+        const task = cron.schedule(schedule, () => {
             console.log(`执行脚本: ${scriptName}`);
             try {
                 // 创建自定义console对象，将输出重定向到WebSocket
                 const customConsole = {
                     log: (...args) => {
-                        const message = args.map(arg => 
+                        const message = args.map(arg =>
                             typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
                         ).join(' ');
                         wss.clients.forEach(client => {
@@ -95,7 +96,7 @@ function startScript(scriptName, schedule, scriptContent)
                         });
                     },
                     error: (...args) => {
-                        const message = args.map(arg => 
+                        const message = args.map(arg =>
                             typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
                         ).join(' ');
                         wss.clients.forEach(client => {
@@ -134,17 +135,27 @@ function startScript(scriptName, schedule, scriptContent)
     }
 }
 
+// 获取脚本路径
+function getScriptPath(scriptName) {
+    let scriptPath = path.join(SCRIPTS_DIR, scriptName);
+    if(!fs.existsSync(scriptPath)){
+        scriptPath = path.join(UTILS_DIR, scriptName);
+        if(!fs.existsSync(scriptPath)){
+            return null;
+        }
+    }
+    return scriptPath;
+}
+
 // API路由
 
 // 获取所有脚本
-app.get('/api/scripts', (req, res) =>
-{
+app.get('/api/scripts', (req, res) => {
     try {
         const scripts = [];
         const scriptFiles = fs.readdirSync(SCRIPTS_DIR).filter(file => file.endsWith('.js'));
 
-        scriptFiles.forEach(scriptFile =>
-        {
+        scriptFiles.forEach(scriptFile => {
             const scriptPath = path.join(SCRIPTS_DIR, scriptFile);
             const scriptContent = fs.readFileSync(scriptPath, 'utf8');
 
@@ -175,13 +186,11 @@ app.get('/api/scripts', (req, res) =>
 });
 
 // 获取单个脚本
-app.get('/api/scripts/:name', (req, res) =>
-{
+app.get('/api/scripts/:name', (req, res) => {
     try {
         const scriptName = req.params.name;
-        const scriptPath = path.join(SCRIPTS_DIR, scriptName);
-
-        if (!fs.existsSync(scriptPath)) {
+        const scriptPath = getScriptPath(scriptName);
+        if (!scriptPath) {
             return res.status(404).json({ error: '脚本不存在' });
         }
 
@@ -211,8 +220,7 @@ app.get('/api/scripts/:name', (req, res) =>
 });
 
 // 创建新脚本
-app.post('/api/scripts', (req, res) =>
-{
+app.post('/api/scripts', (req, res) => {
     try {
         const { name, content, schedule, enabled } = req.body;
 
@@ -249,8 +257,7 @@ app.post('/api/scripts', (req, res) =>
 });
 
 // 更新脚本
-app.put('/api/scripts/:name', (req, res) =>
-{
+app.put('/api/scripts/:name', (req, res) => {
     try {
         const scriptName = req.params.name;
         const { content, schedule, enabled } = req.body;
@@ -286,14 +293,16 @@ app.put('/api/scripts/:name', (req, res) =>
 });
 
 // 删除脚本
-app.delete('/api/scripts/:name', (req, res) =>
-{
+app.delete('/api/scripts/:name', (req, res) => {
     try {
         const scriptName = req.params.name;
-        const scriptPath = path.join(SCRIPTS_DIR, scriptName);
-
+        let scriptPath = path.join(SCRIPTS_DIR, scriptName);
         if (!fs.existsSync(scriptPath)) {
-            return res.status(404).json({ error: '脚本不存在' });
+            // 如果是通用脚本，则尝试从UTILS_DIR中删除
+            scriptPath = path.join(UTILS_DIR, scriptName);
+            if (!fs.existsSync(scriptPath)) {
+                return res.status(404).json({ error: '脚本不存在' });
+            }
         }
 
         // 如果任务正在运行，停止它
@@ -313,12 +322,10 @@ app.delete('/api/scripts/:name', (req, res) =>
 });
 
 // 暂停/恢复脚本
-app.post('/api/scripts/:name/toggle', (req, res) =>
-{
+app.post('/api/scripts/:name/toggle', (req, res) => {
     try {
         const scriptName = req.params.name;
-        const scriptPath = path.join(SCRIPTS_DIR, scriptName);
-
+        const scriptPath = getScriptPath(scriptName);
         if (!fs.existsSync(scriptPath)) {
             return res.status(404).json({ error: '脚本不存在' });
         }
@@ -371,8 +378,7 @@ app.post('/api/scripts/:name/toggle', (req, res) =>
 });
 
 // 临时保存脚本
-app.put('/api/scripts/:name/temp', (req, res) =>
-{
+app.put('/api/scripts/:name/temp', (req, res) => {
     try {
         const scriptName = req.params.name;
         const { content, schedule, enabled } = req.body;
@@ -388,12 +394,10 @@ app.put('/api/scripts/:name/temp', (req, res) =>
 });
 
 // 手动执行脚本
-app.post('/api/scripts/:name/run', (req, res) =>
-{
+app.post('/api/scripts/:name/run', (req, res) => {
     try {
         const scriptName = req.params.name;
-        const scriptPath = path.join(SCRIPTS_DIR, scriptName);
-
+        const scriptPath = getScriptPath(scriptName);
         if (!fs.existsSync(scriptPath)) {
             return res.status(404).json({ error: '脚本不存在' });
         }
@@ -409,7 +413,7 @@ app.post('/api/scripts/:name/run', (req, res) =>
             // 创建自定义console对象，将输出重定向到WebSocket
             const customConsole = {
                 log: (...args) => {
-                    const message = args.map(arg => 
+                    const message = args.map(arg =>
                         typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
                     ).join(' ');
                     wss.clients.forEach(client => {
@@ -419,7 +423,7 @@ app.post('/api/scripts/:name/run', (req, res) =>
                     });
                 },
                 error: (...args) => {
-                    const message = args.map(arg => 
+                    const message = args.map(arg =>
                         typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
                     ).join(' ');
                     wss.clients.forEach(client => {
@@ -458,8 +462,7 @@ app.post('/api/scripts/:name/run', (req, res) =>
 });
 
 // 获取脚本执行日志（这是一个额外功能）
-app.get('/api/logs', (req, res) =>
-{
+app.get('/api/logs', (req, res) => {
     // 在实际应用中，这里应该实现日志存储和检索功能
     // 简化版本，返回空数组
     res.json([]);
@@ -478,8 +481,7 @@ wss.on('connection', (ws, req) => {
 });
 
 // 启动服务器
-server.listen(PORT, () =>
-{
+server.listen(PORT, () => {
     console.log(`服务器运行在端口 ${PORT}`);
 
     // 启动所有已启用的脚本
