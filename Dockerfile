@@ -7,8 +7,11 @@ WORKDIR /app/client
 # 复制客户端依赖文件
 COPY client/package.json client/package-lock.json* ./
 
+# 安装pnpm
+RUN npm install -g pnpm
+
 # 安装依赖
-RUN npm ci
+RUN pnpm install
 
 # 复制客户端源代码
 COPY client/ ./
@@ -28,8 +31,11 @@ WORKDIR /app/server
 # 复制服务端依赖文件
 COPY server/package.json server/package-lock.json* ./
 
+# 安装pnpm
+RUN npm install -g pnpm
+
 # 安装依赖
-RUN npm ci
+RUN pnpm install
 
 # 复制服务端源代码
 COPY server/ ./

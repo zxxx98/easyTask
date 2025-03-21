@@ -52,7 +52,7 @@ router.post('/', async (req, res) =>
         // 在scripts目录下执行npm install
         await new Promise((resolve, reject) =>
         {
-            exec(`cd "${scriptsDir}" && npm install ${name} --save`, (error, stdout, stderr) =>
+            exec(`cd "${scriptsDir}" && pnpm install ${name} --save`, (error, stdout, stderr) =>
             {
                 if (error) {
                     console.error(`安装包失败: ${error}`);
@@ -81,7 +81,7 @@ router.delete('/:name', async (req, res) =>
         // 在scripts目录下执行npm uninstall
         await new Promise((resolve, reject) =>
         {
-            exec(`cd "${scriptsDir}" && npm uninstall ${name}`, (error, stdout, stderr) =>
+            exec(`cd "${scriptsDir}" && pnpm uninstall ${name}`, (error, stdout, stderr) =>
             {
                 if (error) {
                     console.error(`卸载包失败: ${error}`);
