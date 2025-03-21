@@ -6,10 +6,14 @@ const fs = require('fs-extra');
 const path = require('path');
 const cron = require('node-cron');
 const { VM } = require('vm2');
+const { WebSocketServer } = require('ws');
+const http = require('http');
 const packagesRouter = require('./api/packages');
 
 // 初始化应用
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
 const PORT = process.env.PORT || 3001;
 
 // 中间件
@@ -24,8 +28,9 @@ app.use('/api/packages', packagesRouter);
 const SCRIPTS_DIR = path.join(__dirname, '../scripts');
 fs.ensureDirSync(SCRIPTS_DIR);
 
-// 存储所有运行中的任务
+// 存储所有运行中的任务和临时保存的脚本
 const runningTasks = {};
+const tempScripts = {};
 
 // 加载并启动所有脚本
 function loadAndStartAllScripts()
@@ -77,10 +82,34 @@ function startScript(scriptName, schedule, scriptContent)
         {
             console.log(`执行脚本: ${scriptName}`);
             try {
+                // 创建自定义console对象，将输出重定向到WebSocket
+                const customConsole = {
+                    log: (...args) => {
+                        const message = args.map(arg => 
+                            typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+                        ).join(' ');
+                        wss.clients.forEach(client => {
+                            if (client.scriptName === scriptName) {
+                                client.send(message);
+                            }
+                        });
+                    },
+                    error: (...args) => {
+                        const message = args.map(arg => 
+                            typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+                        ).join(' ');
+                        wss.clients.forEach(client => {
+                            if (client.scriptName === scriptName) {
+                                client.send(`[ERROR] ${message}`);
+                            }
+                        });
+                    }
+                };
+
                 const vm = new VM({
                     timeout: 5000, // 5秒超时
                     sandbox: {
-                        console: console,
+                        console: customConsole,
                         require: require, // 允许脚本使用require导入包
                         module: module,
                         __dirname: path.join(__dirname, '../scripts'), // 设置脚本的工作目录
@@ -341,6 +370,23 @@ app.post('/api/scripts/:name/toggle', (req, res) =>
     }
 });
 
+// 临时保存脚本
+app.put('/api/scripts/:name/temp', (req, res) =>
+{
+    try {
+        const scriptName = req.params.name;
+        const { content, schedule, enabled } = req.body;
+
+        // 保存到临时存储
+        tempScripts[scriptName] = { content, schedule, enabled };
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('临时保存脚本失败:', err);
+        res.status(500).json({ error: '临时保存脚本失败' });
+    }
+});
+
 // 手动执行脚本
 app.post('/api/scripts/:name/run', (req, res) =>
 {
@@ -352,14 +398,42 @@ app.post('/api/scripts/:name/run', (req, res) =>
             return res.status(404).json({ error: '脚本不存在' });
         }
 
-        const scriptContent = fs.readFileSync(scriptPath, 'utf8');
+        // 优先使用临时保存的内容
+        let scriptContent = tempScripts[scriptName]?.content;
+        if (!scriptContent) {
+            scriptContent = fs.readFileSync(scriptPath, 'utf8');
+        }
 
         // 执行脚本
         try {
+            // 创建自定义console对象，将输出重定向到WebSocket
+            const customConsole = {
+                log: (...args) => {
+                    const message = args.map(arg => 
+                        typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+                    ).join(' ');
+                    wss.clients.forEach(client => {
+                        if (client.scriptName === scriptName) {
+                            client.send(message);
+                        }
+                    });
+                },
+                error: (...args) => {
+                    const message = args.map(arg => 
+                        typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+                    ).join(' ');
+                    wss.clients.forEach(client => {
+                        if (client.scriptName === scriptName) {
+                            client.send(`[ERROR] ${message}`);
+                        }
+                    });
+                }
+            };
+
             const vm = new VM({
                 timeout: 5000, // 5秒超时
                 sandbox: {
-                    console: console,
+                    console: customConsole,
                     // 可以在这里添加更多的API供脚本使用
                 }
             });
@@ -370,6 +444,11 @@ app.post('/api/scripts/:name/run', (req, res) =>
             res.json({ success: true, message: '脚本执行成功' });
         } catch (err) {
             console.error(`执行脚本 ${scriptName} 时出错:`, err);
+            wss.clients.forEach(client => {
+                if (client.scriptName === scriptName) {
+                    client.send(`[ERROR] 执行脚本失败: ${err.message}`);
+                }
+            });
             res.status(500).json({ error: '脚本执行失败', message: err.message });
         }
     } catch (err) {
@@ -386,8 +465,20 @@ app.get('/api/logs', (req, res) =>
     res.json([]);
 });
 
+// WebSocket连接处理
+wss.on('connection', (ws, req) => {
+    const matches = req.url.match(/\/api\/scripts\/([^\/]+)\/logs/);
+    const scriptName = matches ? matches[1] : '';
+    ws.scriptName = scriptName;
+    console.log(`WebSocket连接已建立: ${scriptName}`);
+
+    ws.on('close', () => {
+        console.log(`WebSocket连接已关闭: ${scriptName}`);
+    });
+});
+
 // 启动服务器
-app.listen(PORT, () =>
+server.listen(PORT, () =>
 {
     console.log(`服务器运行在端口 ${PORT}`);
 
