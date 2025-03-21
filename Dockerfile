@@ -13,6 +13,10 @@ RUN npm ci
 # 复制客户端源代码
 COPY client/ ./
 
+# 设置API地址环境变量，默认为/api
+ARG VITE_API_BASE_URL=/api
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
 # 构建客户端
 RUN npm run build
 
@@ -47,8 +51,11 @@ COPY --from=client-builder /app/client/dist /app/server/public
 # 设置工作目录
 WORKDIR /app/server
 
+# 设置后端端口环境变量，默认为3001
+ENV PORT=3001
+
 # 暴露端口
-EXPOSE 3001
+EXPOSE ${PORT}
 
 # 启动命令
 CMD ["node", "src/index.js"]
