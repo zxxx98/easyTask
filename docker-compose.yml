@@ -5,8 +5,8 @@ services:
     image: zhouxin98/easytask:latest
     container_name: easytask
     ports:
-      - "${PORT:-3001}:3001"
-      - "${VITE_PORT:-3000}:3000"
+      - "3001:3001"
+      - "3000:3000"
     volumes:
       - /path/to/scripts:/app/server/scripts
     environment:

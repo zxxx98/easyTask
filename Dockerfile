@@ -74,7 +74,7 @@ EXPOSE ${VITE_PORT}
 RUN npm install -g serve
 
 # 创建启动脚本
-RUN echo '#!/bin/sh\nserve -s public -l ${VITE_PORT} -H ${VITE_HOST} & node src/index.js' > start.sh && chmod +x start.sh
+RUN echo '#!/bin/sh\nserve -s public -p ${VITE_PORT} -l tcp://${VITE_HOST}:${VITE_PORT} & node src/index.js' > start.sh && chmod +x start.sh
 
 # 启动命令
 CMD ["/bin/sh", "start.sh"]
