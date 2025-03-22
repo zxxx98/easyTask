@@ -16,13 +16,9 @@ RUN pnpm install
 # 复制客户端源代码
 COPY client/ ./
 
-# 设置环境变量
+# 设置API地址环境变量，默认为/api
 ARG VITE_API_BASE_URL=/api
-ARG VITE_PORT=3000
-ARG VITE_HOST=0.0.0.0
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-ENV VITE_PORT=${VITE_PORT}
-ENV VITE_HOST=${VITE_HOST}
 
 # 构建客户端
 RUN npm run build
@@ -61,24 +57,16 @@ COPY --from=client-builder /app/client/dist /app/server/public
 # 设置工作目录
 WORKDIR /app/server
 
-# 设置环境变量
+# 设置后端端口环境变量，默认为3001
 ENV PORT=3001
-ENV VITE_PORT=${VITE_PORT}
-ENV VITE_HOST=${VITE_HOST}
 
 # 暴露端口
 EXPOSE ${PORT}
-EXPOSE ${VITE_PORT}
 
-# 安装serve工具
-RUN npm install -g serve
+EXPOSE 3000
 
-# 安装netcat用于端口检查
-RUN apk add --no-cache netcat-openbsd
+# 安装pnpm和serve包
+RUN pnpm install -g serve
 
-# 创建启动脚本
-RUN echo '#!/bin/sh\n
-# 启动服务\nserve -s public -p ${VITE_PORT} -l tcp://${VITE_HOST}:${VITE_PORT} & \nnode src/index.js & \n\n# 等待5秒让服务启动\nsleep 5\n\n# 检查前端服务端口\nif ! nc -z localhost ${VITE_PORT}; then\n    echo "前端服务启动失败"\n    exit 1\nfi\n\n# 检查后端服务端口\nif ! nc -z localhost ${PORT}; then\n    echo "后端服务启动失败"\n    exit 1\nfi\n\n# 保持容器运行\nwait\n' > start.sh && chmod +x start.sh
-
-# 启动命令
-CMD ["/bin/sh", "start.sh"]
+# 启动服务端和客户端
+CMD ["/bin/sh", "-c", "serve -s public -l 3000 & node src/index.js"]
