@@ -65,8 +65,8 @@ EXPOSE ${PORT}
 
 EXPOSE 3000
 
-# 安装pnpm和serve包
-RUN pnpm install -g serve
+# 安装serve包
+RUN npm install -g serve
 
 # 启动服务端和客户端
 CMD ["/bin/sh", "-c", "serve -s public -l 3000 & node src/index.js"]
