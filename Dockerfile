@@ -73,8 +73,12 @@ EXPOSE ${VITE_PORT}
 # 安装serve工具
 RUN npm install -g serve
 
+# 安装netcat用于端口检查
+RUN apk add --no-cache netcat-openbsd
+
 # 创建启动脚本
-RUN echo '#!/bin/sh\nserve -s public -p ${VITE_PORT} -l tcp://${VITE_HOST}:${VITE_PORT} & node src/index.js' > start.sh && chmod +x start.sh
+RUN echo '#!/bin/sh\n
+# 启动服务\nserve -s public -p ${VITE_PORT} -l tcp://${VITE_HOST}:${VITE_PORT} & \nnode src/index.js & \n\n# 等待5秒让服务启动\nsleep 5\n\n# 检查前端服务端口\nif ! nc -z localhost ${VITE_PORT}; then\n    echo "前端服务启动失败"\n    exit 1\nfi\n\n# 检查后端服务端口\nif ! nc -z localhost ${PORT}; then\n    echo "后端服务启动失败"\n    exit 1\nfi\n\n# 保持容器运行\nwait\n' > start.sh && chmod +x start.sh
 
 # 启动命令
 CMD ["/bin/sh", "start.sh"]
