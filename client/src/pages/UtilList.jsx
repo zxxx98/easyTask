@@ -56,7 +56,9 @@ function UtilList() {
       </div>
 
       {loading ? (
-        <div className="text-center py-8">加载中...</div>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+        </div>
       ) : utils.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           暂无通用脚本，点击右上角按钮创建

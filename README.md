@@ -66,12 +66,15 @@ services:
     image: zhouxin98/easytask:latest
     container_name: easytask
     ports:
-      - "3001:3001"
+      - "${PORT:-3001}:3001"
+      - "${VITE_PORT:-3000}:3000"
     volumes:
       - /path/to/scripts:/app/server/scripts
     environment:
       - PORT=3001
       - VITE_API_BASE_URL=/api
+      - VITE_HOST=0.0.0.0
+      - VITE_PORT=3000
     restart: unless-stopped
 ```
 
@@ -83,10 +86,12 @@ docker-compose up -d
 
 ## 环境变量
 
-| 变量名            | 说明         | 默认值 |
-| ----------------- | ------------ | ------ |
-| PORT              | 后端服务端口 | 3001   |
-| VITE_API_BASE_URL | API 基础路径 | /api   |
+| 变量名            | 说明           | 默认值  |
+| ----------------- | -------------- | ------- |
+| PORT              | 后端服务端口   | 3001    |
+| VITE_API_BASE_URL | API 基础路径   | /api    |
+| VITE_PORT         | 前端开发服务端口| 3000    |
+| VITE_HOST         | 前端服务主机   | 0.0.0.0 |
 
 ## 访问应用
 
@@ -101,3 +106,4 @@ docker-compose up -d
 1. 确保挂载目录具有适当的读写权限
 2. 建议使用具体的版本标签而不是 latest 标签来部署
 3. 在生产环境中，建议配置反向代理（如 Nginx）来提供服务
+4. 设置VITE_HOST=0.0.0.0可以允许局域网内其他设备访问前端开发服务
