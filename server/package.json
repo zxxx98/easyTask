@@ -26,6 +26,9 @@
     "ws": "^8.18.1"
   },
   "devDependencies": {
+    "@babel/core": "^7.26.10",
+    "@babel/preset-env": "^7.26.9",
+    "@babel/register": "^7.25.9",
     "nodemon": "^3.0.1"
   }
 }

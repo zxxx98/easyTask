@@ -5,9 +5,10 @@ const bodyParser = require('body-parser');
 const fs = require('fs-extra');
 const path = require('path');
 const cron = require('node-cron');
-const { VM } = require('vm2');
+const { NodeVM } = require('vm2');
 const { WebSocketServer } = require('ws');
 const http = require('http');
+const babel = require('@babel/core');
 const packagesRouter = require('./api/packages');
 const utilsRouter = require('./api/utils');
 const { UTILS_DIR } = require('../utils');
@@ -114,16 +115,40 @@ function startScript(scriptName, schedule, scriptContent)
                         });
                     }
                 };
-
-                const vm = new VM({
+                const rootPath = path.join(__dirname, '../scripts');
+                const vm = new NodeVM({
                     timeout: 5000, // 5秒超时
-                    sandbox: {
-                        console: customConsole,
-                        require: require, // 允许脚本使用require导入包
-                        module: module,
-                        __dirname: path.join(__dirname, '../scripts'), // 设置脚本的工作目录
-                        __filename: path.join(__dirname, '../scripts', scriptName)
+                    console: 'redirect',
+                    compiler: (code, filename) =>
+                    {
+                        // 使用 Babel 转译代码（支持 import/export）
+                        return babel.transform(code, {
+                            filename,
+                            presets: [
+                                ['@babel/preset-env', {
+                                    modules: 'commonjs', // 强制转为 CommonJS
+                                    targets: { node: 'current' } // 兼容当前 Node.js 版本
+                                }]
+                            ],
+                            sourceType: 'module' // 确保 Babel 以 ES 模块解析
+                        }).code;
+                    },
+                    require: {
+                        builtin: ['*'],
+                        external: true,
+                        context: 'host',
+                        root: rootPath,
+                        resolve: (moduleName) => path.resolve(rootPath, 'node_modules', moduleName)
                     }
+                });
+                vm.on('console.log', (...message) =>
+                {
+                    customConsole.log(message);
+                });
+
+                vm.on('console.error', (...message) =>
+                {
+                    customConsole.error(message);
                 });
 
                 // 执行脚本
@@ -411,7 +436,7 @@ app.put('/api/scripts/:name/temp', (req, res) =>
 });
 
 // 手动执行脚本
-app.post('/api/scripts/:name/run', (req, res) =>
+app.post('/api/scripts/:name/run', async (req, res) =>
 {
     try {
         const scriptName = req.params.name;
@@ -455,20 +480,45 @@ app.post('/api/scripts/:name/run', (req, res) =>
                     });
                 }
             };
-
-            const vm = new VM({
+            const rootPath = path.join(__dirname, '../scripts');
+            const vm = new NodeVM({
                 timeout: 5000, // 5秒超时
-                sandbox: {
-                    console: customConsole,
-                    require: require, // 允许脚本使用require导入包
-                    module: module,
-                    __dirname: path.join(__dirname, '../scripts'), // 设置脚本的工作目录
-                    __filename: path.join(__dirname, '../scripts', scriptName)
+                console: 'redirect',
+                compiler: (code, filename) =>
+                {
+                    // 使用 Babel 转译代码（支持 import/export）
+                    return babel.transform(code, {
+                        filename,
+                        presets: [
+                            ['@babel/preset-env', {
+                                modules: 'commonjs', // 强制转为 CommonJS
+                                targets: { node: 'current' } // 兼容当前 Node.js 版本
+                            }]
+                        ],
+                        sourceType: 'module' // 确保 Babel 以 ES 模块解析
+                    }).code;
+                },
+                require: {
+                    builtin: ['*'],
+                    external: true,
+                    context: 'host',
+                    root: rootPath,
+                    resolve: (moduleName) => path.resolve(rootPath, 'node_modules', moduleName)
                 }
+            });
+            vm.on('console.log', (...message) =>
+            {
+                console.log(message);
+                customConsole.log(message);
+            });
+
+            vm.on('console.error', (...message) =>
+            {
+                customConsole.error(message);
             });
 
             // 执行脚本
-            vm.run(scriptContent);
+            await vm.run(scriptContent);
 
             res.json({ success: true, message: '脚本执行成功' });
         } catch (err) {
