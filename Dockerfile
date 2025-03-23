@@ -42,8 +42,8 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# 安装nginx
-RUN apk add --no-cache nginx
+# 安装nginx和netcat
+RUN apk add --no-cache nginx netcat-openbsd
 
 # 创建脚本目录
 RUN mkdir -p /app/server/scripts
@@ -67,5 +67,9 @@ ENV PORT=3001
 EXPOSE 80
 EXPOSE ${PORT}
 
-# 启动nginx和后端服务
-CMD ["/bin/sh", "-c", "nginx && node src/index.js"]
+# 启动脚本
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+# 启动服务
+CMD ["/app/start.sh"]
