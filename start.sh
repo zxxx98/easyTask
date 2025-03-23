@@ -12,7 +12,7 @@ done
 
 # 启动前端服务
 cd /app/client
-npm run preview &
+serve -s dist -l 3000 &
 
 # 等待前端服务就绪
 while ! nc -z localhost 3000; do

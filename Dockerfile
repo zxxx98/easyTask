@@ -52,7 +52,11 @@ RUN mkdir -p /app/server/scripts
 COPY --from=server-builder /app/server /app/server
 
 # 复制客户端构建文件
-COPY --from=client-builder /app/client/dist /app/client
+COPY --from=client-builder /app/client/dist /app/client/dist
+
+# 安装serve
+WORKDIR /app/client
+RUN npm install -g serve
 
 # 复制nginx配置文件
 COPY nginx.conf /etc/nginx/nginx.conf
