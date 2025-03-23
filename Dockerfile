@@ -42,6 +42,9 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# 安装nginx
+RUN apk add --no-cache nginx
+
 # 创建脚本目录
 RUN mkdir -p /app/server/scripts
 
@@ -49,7 +52,10 @@ RUN mkdir -p /app/server/scripts
 COPY --from=server-builder /app/server /app/server
 
 # 复制客户端构建文件
-COPY --from=client-builder /app/client/dist /app/server/public
+COPY --from=client-builder /app/client/dist /app/client
+
+# 复制nginx配置文件
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # 设置工作目录
 WORKDIR /app/server
@@ -58,12 +64,8 @@ WORKDIR /app/server
 ENV PORT=3001
 
 # 暴露端口
+EXPOSE 80
 EXPOSE ${PORT}
 
-EXPOSE 3000
-
-# 安装serve包
-RUN npm install -g serve
-
-# 启动服务端和客户端
-CMD ["/bin/sh", "-c", "serve -s public -l 3000 & node src/index.js"]
+# 启动nginx和后端服务
+CMD ["/bin/sh", "-c", "nginx && node src/index.js"]

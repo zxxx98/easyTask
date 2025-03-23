@@ -50,8 +50,11 @@ docker pull zhouxin98/easytask:latest
 # 运行容器
 docker run -d \
   --name easytask \
+  -p 80:80 \
   -p 3001:3001 \
   -v /path/to/scripts:/app/server/scripts \
+  -e PORT=3001 \
+  -e VITE_HOST=0.0.0.0 \
   zhouxin98/easytask:latest
 ```
 
@@ -67,14 +70,13 @@ services:
     image: zhouxin98/easytask:latest
     container_name: easytask
     ports:
+      - "80:80"
       - "${PORT:-3001}:3001"
-      - "${VITE_PORT:-3000}:3000"
     volumes:
       - /path/to/scripts:/app/server/scripts
     environment:
       - PORT=3001
       - VITE_HOST=0.0.0.0
-      - VITE_PORT=3000
     restart: unless-stopped
 ```
 
@@ -86,15 +88,17 @@ docker-compose up -d
 
 ## 环境变量
 
-| 变量名    | 说明             | 默认值  |
-| --------- | ---------------- | ------- |
-| PORT      | 后端服务端口     | 3001    |
-| VITE_PORT | 前端开发服务端口 | 3000    |
-| VITE_HOST | 前端服务主机     | 0.0.0.0 |
+| 变量名    | 说明         | 默认值  |
+| --------- | ------------ | ------- |
+| PORT      | 后端服务端口 | 3001    |
+| VITE_HOST | 前端服务主机 | 0.0.0.0 |
 
 ## 访问应用
 
-部署完成后，访问 `http://localhost:3001` 即可打开应用界面。
+部署完成后：
+
+- 通过 `http://localhost` 或 `http://your-server-ip` 访问应用界面
+- API 服务通过 `http://localhost:3001` 或 `http://your-server-ip:3001` 访问
 
 ## 数据持久化
 
@@ -104,5 +108,5 @@ docker-compose up -d
 
 1. 确保挂载目录具有适当的读写权限
 2. 建议使用具体的版本标签而不是 latest 标签来部署
-3. 在生产环境中，建议配置反向代理（如 Nginx）来提供服务
-4. 设置 VITE_HOST=0.0.0.0 可以允许局域网内其他设备访问前端开发服务
+3. 容器同时暴露了 80 端口（用于 Web 界面访问）和 3001 端口（用于 API 服务）
+4. 设置 VITE_HOST=0.0.0.0 可以允许局域网内其他设备访问服务
