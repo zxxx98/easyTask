@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import axios from 'axios'
+import request from '../config/request'
 import { toast } from 'react-toastify'
 import { PencilIcon, TrashIcon, PlayIcon, PauseIcon, PlusIcon } from '@heroicons/react/24/outline'
 
@@ -13,7 +13,7 @@ function ScriptList() {
   const fetchScripts = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('/api/scripts')
+      const response = await request.get('/api/scripts')
       setScripts(response.data)
       setError(null)
     } catch (err) {
@@ -37,7 +37,7 @@ function ScriptList() {
     }
 
     try {
-      await axios.delete(`/api/scripts/${scriptName}`)
+      await request.delete(`/api/scripts/${scriptName}`)
       toast.success('脚本删除成功')
       fetchScripts() // 重新获取脚本列表
     } catch (err) {
@@ -49,7 +49,7 @@ function ScriptList() {
   // 切换脚本启用/禁用状态
   const handleToggle = async (scriptName) => {
     try {
-      await axios.post(`/api/scripts/${scriptName}/toggle`)
+      await request.post(`/api/scripts/${scriptName}/toggle`)
       toast.success('脚本状态已更新')
       fetchScripts() // 重新获取脚本列表
     } catch (err) {
@@ -61,7 +61,7 @@ function ScriptList() {
   // 手动执行脚本
   const handleRun = async (scriptName) => {
     try {
-      await axios.post(`/api/scripts/${scriptName}/run`)
+      await request.post(`/api/scripts/${scriptName}/run`)
       toast.success('脚本执行成功')
     } catch (err) {
       console.error('执行脚本失败:', err)

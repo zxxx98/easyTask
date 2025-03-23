@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import axios from 'axios'
+import request from '../config/request'
 import { toast } from 'react-toastify'
 
 function DebugPanel({ scriptId, content, schedule, enabled, isNewScript = false }) {
@@ -47,14 +47,14 @@ function DebugPanel({ scriptId, content, schedule, enabled, isNewScript = false 
 
       // 如果是新脚本，需要先临时保存
       if (isNewScript) {
-        await axios.post('/api/scripts/temp', {
+        await request.post('/api/scripts/temp', {
           content,
           schedule,
           enabled
         })
       } else {
         // 已有脚本，临时保存当前编辑的内容
-        await axios.put(`/api/scripts/${scriptId}/temp`, {
+        await request.put(`/api/scripts/${scriptId}/temp`, {
           content,
           schedule,
           enabled
@@ -62,7 +62,7 @@ function DebugPanel({ scriptId, content, schedule, enabled, isNewScript = false 
       }
 
       // 发送运行请求
-      await axios.post(`/api/scripts/${scriptId}/run`)
+      await request.post(`/api/scripts/${scriptId}/run`)
       toast.info('脚本运行完成')
       handleStop() // 执行成功后停止运行
     } catch (err) {

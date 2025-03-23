@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import request from '../config/request';
 import { toast } from 'react-toastify';
 
 function PackageManager() {
@@ -14,7 +14,7 @@ function PackageManager() {
 
   const fetchPackages = async () => {
     try {
-      const response = await axios.get('/api/packages');
+      const response = await request.get('/api/packages');
       setPackages(response.data);
     } catch (error) {
       toast.error('获取包列表失败');
@@ -28,7 +28,7 @@ function PackageManager() {
 
     setLoading(true);
     try {
-      await axios.post('/api/packages', { name: newPackage });
+      await request.post('/api/packages', { name: newPackage });
       toast.success(`成功安装包：${newPackage}`);
       setNewPackage('');
       fetchPackages();
@@ -44,7 +44,7 @@ function PackageManager() {
     if (!confirm(`确定要卸载 ${packageName} 吗？`)) return;
 
     try {
-      await axios.delete(`/api/packages/${packageName}`);
+      await request.delete(`/api/packages/${packageName}`);
       toast.success(`成功卸载包：${packageName}`);
       fetchPackages();
     } catch (error) {

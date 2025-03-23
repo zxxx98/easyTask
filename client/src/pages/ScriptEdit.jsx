@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import request from '../config/request'
 import { toast } from 'react-toastify'
 import AceEditor from 'react-ace'
 import 'ace-builds/src-noconflict/mode-javascript'
@@ -26,7 +26,7 @@ function ScriptEdit() {
     const fetchScript = async () => {
       try {
         setLoading(true)
-        const response = await axios.get(`/api/scripts/${id}`)
+        const response = await request.get(`/api/scripts/${id}`)
         const scriptData = response.data
 
         setScript(scriptData)
@@ -64,7 +64,7 @@ function ScriptEdit() {
     try {
       setSaving(true)
 
-      await axios.put(`/api/scripts/${id}`, {
+      await request.put(`/api/scripts/${id}`, {
         content,
         schedule,
         enabled

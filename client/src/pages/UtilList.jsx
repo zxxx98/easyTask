@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import request from '../config/request'
 import { toast } from 'react-toastify'
 import { PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline'
 
@@ -16,7 +16,7 @@ function UtilList() {
 
   const loadUtils = async () => {
     try {
-      const response = await axios.get('/api/utils')
+      const response = await request.get('/api/utils')
       setUtils(response.data)
     } catch (err) {
       console.error('加载通用脚本失败:', err)
@@ -33,7 +33,7 @@ function UtilList() {
     }
 
     try {
-      await axios.delete(`/api/utils/${name}`)
+      await request.delete(`/api/utils/${name}`)
       toast.success('删除成功')
       loadUtils()
     } catch (err) {

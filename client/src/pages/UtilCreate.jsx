@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import request from '../config/request'
 import { toast } from 'react-toastify'
 import AceEditor from 'react-ace'
 import 'ace-builds/src-noconflict/mode-javascript'
@@ -25,7 +25,7 @@ function UtilCreate() {
     try {
       setSaving(true)
 
-      await axios.post('/api/utils', {
+      await request.post('/api/utils', {
         name,
         content
       })

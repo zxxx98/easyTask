@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import axios from 'axios'
+import request from '../config/request'
 import { toast } from 'react-toastify'
 import AceEditor from 'react-ace'
 import 'ace-builds/src-noconflict/mode-javascript'
@@ -23,7 +23,7 @@ function UtilEdit() {
 
   const loadUtil = async () => {
     try {
-      const response = await axios.get(`/api/utils/${name}`)
+      const response = await request.get(`/api/utils/${name}`)
       setContent(response.data.content)
     } catch (err) {
       console.error('加载通用脚本失败:', err)
@@ -39,7 +39,7 @@ function UtilEdit() {
     try {
       setSaving(true)
 
-      await axios.put(`/api/utils/${name}`, {
+      await request.put(`/api/utils/${name}`, {
         content
       })
 
