@@ -2,8 +2,8 @@
  * @Description: 
  * @Author: zhouxin
  * @Date: 2025-03-23 09:42:48
- * @LastEditors: 
- * @LastEditTime: 2025-03-23 09:44:27
+ * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2025-03-23 11:16:04
  * @FilePath: \easyTask\client\src\config\request.js
  */
 import axios from 'axios';

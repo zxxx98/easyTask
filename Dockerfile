@@ -16,9 +16,6 @@ RUN pnpm install
 # 复制客户端源代码
 COPY client/ ./
 
-# 设置API地址环境变量，默认为/api
-ARG VITE_API_BASE_URL=/api
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 # 构建客户端
 RUN npm run build

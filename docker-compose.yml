@@ -11,7 +11,6 @@ services:
       - /path/to/scripts:/app/server/scripts
     environment:
       - PORT=3001
-      - VITE_API_BASE_URL=/api
       - VITE_HOST=0.0.0.0
       - VITE_PORT=3000
     restart: unless-stopped
