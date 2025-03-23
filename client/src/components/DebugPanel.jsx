@@ -29,7 +29,7 @@ function DebugPanel({ scriptId, content, schedule, enabled, isNewScript = false 
       }
 
       // 创建新的WebSocket连接
-      const ws = new WebSocket(`ws://localhost:3001/api/scripts/${scriptId}/logs`)
+      const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}${window.location.host === 'localhost:3000' ? '//localhost:3001' : `//${window.location.host}`}/api/scripts/${scriptId}/logs`)
       wsRef.current = ws
 
       ws.onmessage = (event) => {
