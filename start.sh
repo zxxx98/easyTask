@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# 初始化scripts目录的pnpm环境
+cd /app/server/scripts
+pnpm init -y
+
 # 启动后端服务
 cd /app/server
 node src/index.js &

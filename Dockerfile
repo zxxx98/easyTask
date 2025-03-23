@@ -42,8 +42,8 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# 安装nginx和netcat
-RUN apk add --no-cache nginx netcat-openbsd
+# 安装nginx、netcat和pnpm
+RUN apk add --no-cache nginx netcat-openbsd && npm install -g pnpm
 
 # 创建脚本目录
 RUN mkdir -p /app/server/scripts
