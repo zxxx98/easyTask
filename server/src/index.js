@@ -1,3 +1,11 @@
+/*
+ * @Description: 
+ * @Author: zhouxin
+ * @Date: 2025-03-20 22:54:29
+ * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2025-03-25 23:44:18
+ * @FilePath: \easyTask\server\src\index.js
+ */
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -11,6 +19,7 @@ const http = require('http');
 const babel = require('@babel/core');
 const packagesRouter = require('./api/packages');
 const utilsRouter = require('./api/utils');
+const paramsRouter = require('./api/params');
 const { UTILS_DIR } = require('../utils');
 
 // 初始化应用
@@ -29,6 +38,9 @@ app.use('/api/packages', packagesRouter);
 
 // 注册通用脚本API路由
 app.use('/api/utils', utilsRouter);
+
+// 注册全局参数API路由
+app.use('/api/params', paramsRouter);
 
 // 确保脚本目录存在
 const SCRIPTS_DIR = path.join(__dirname, '../scripts');
@@ -503,7 +515,13 @@ app.post('/api/scripts/:name/run', async (req, res) =>
                     external: true,
                     context: 'host',
                     root: rootPath,
-                    resolve: (moduleName) => path.resolve(rootPath, 'node_modules', moduleName)
+                    resolve: (moduleName) =>
+                    {
+                        if (moduleName.includes("common")) {
+                            return path.resolve(rootPath, moduleName);
+                        }
+                        return path.resolve(rootPath, 'node_modules', moduleName);
+                    }
                 }
             });
             vm.on('console.log', (...message) =>

@@ -6,9 +6,20 @@
 }
 */
 
-// 在这里编写您的JavaScript代码
+// 导入sendGotifyMessage函数
+import sendGotifyMessage from './common/testt';
 
-console.log("Hello, EasyTask!");
+// 异步函数来发送消息
+async function main()
+{
+  console.log("Hello, EasyTask!");
 
-console.log("Hello, EasyTask!");
-console.log("Hello, EasyTask!");
+  // 发送Gotify消息
+  await sendGotifyMessage("测试消息", "这是一条来自EasyTask的测试消息");
+}
+
+// 执行主函数
+main().catch(error =>
+{
+  console.error('执行出错:', error);
+});

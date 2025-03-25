@@ -3,12 +3,12 @@
  * @Author: zhouxin
  * @Date: 2025-03-23 17:40:07
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-03-23 21:40:04
+ * @LastEditTime: 2025-03-25 23:02:55
  * @FilePath: \easyTask\server\scripts\common\testt.js
  */
 import axios from 'axios';
 
-async function sendGotifyMessage(title, content)
+export default async function sendGotifyMessage(title, content)
 {
   const gotifyUrl = 'https://gotify.xiaodibao.top/message'; // Gotify 服务器的 URL
   const appToken = 'AY5x7owm11RRnoi'; // 替换为你的 Gotify 应用令牌
@@ -30,5 +30,3 @@ async function sendGotifyMessage(title, content)
     console.error('Failed to send message:', error.response ? error.response.data : error.message);
   }
 }
-
-module.exports = sendGotifyMessage('Test Title', 'This is a test message content.');

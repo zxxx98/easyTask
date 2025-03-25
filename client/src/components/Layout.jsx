@@ -8,7 +8,7 @@
  */
 import React from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { PlusIcon, ClockIcon, CubeIcon, WrenchScrewdriverIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, ClockIcon, CubeIcon, WrenchScrewdriverIcon, CogIcon } from '@heroicons/react/24/outline'
 
 function Layout() {
   const location = useLocation()
@@ -43,6 +43,13 @@ function Layout() {
               >
                 <CubeIcon className="inline-block h-4 w-4 mr-1" />
                 包管理
+              </Link>
+              <Link 
+                to="/params"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${location.pathname === '/params' ? 'bg-primary-100 text-primary-700' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <CogIcon className="inline-block h-4 w-4 mr-1" />
+                全局参数
               </Link>
               <Link 
                 to="/scripts/new"
