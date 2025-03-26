@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import request from '../config/request'
 import { toast } from 'react-toastify'
 import { PencilIcon, TrashIcon, PlayIcon, PauseIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { formatSchedule, getCronDescription } from '../utils/corn'
 
 function ScriptList() {
   const [scripts, setScripts] = useState([])
@@ -67,12 +68,6 @@ function ScriptList() {
       console.error('执行脚本失败:', err)
       toast.error(`执行脚本失败: ${err.response?.data?.message || err.message}`)
     }
-  }
-
-  // 格式化cron表达式为更易读的文本
-  const formatSchedule = (schedule) => {
-    // 这里可以添加更复杂的cron表达式解析逻辑
-    return schedule
   }
 
   if (loading) {
@@ -144,7 +139,9 @@ function ScriptList() {
                   <div className="text-sm font-medium text-gray-900">{script.name}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{formatSchedule(script.schedule)}</div>
+                  <div className="text-sm text-gray-500" title={getCronDescription(script.schedule)}>
+                    {formatSchedule(script.schedule)}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${script.enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>

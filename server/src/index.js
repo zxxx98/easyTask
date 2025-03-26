@@ -3,7 +3,7 @@
  * @Author: zhouxin
  * @Date: 2025-03-20 22:54:29
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-03-25 23:44:18
+ * @LastEditTime: 2025-03-26 22:29:00
  * @FilePath: \easyTask\server\src\index.js
  */
 const express = require('express');
@@ -19,7 +19,7 @@ const http = require('http');
 const babel = require('@babel/core');
 const packagesRouter = require('./api/packages');
 const utilsRouter = require('./api/utils');
-const paramsRouter = require('./api/params');
+const envRouter = require('./api/env');
 const { UTILS_DIR } = require('../utils');
 
 // 初始化应用
@@ -40,7 +40,7 @@ app.use('/api/packages', packagesRouter);
 app.use('/api/utils', utilsRouter);
 
 // 注册全局参数API路由
-app.use('/api/params', paramsRouter);
+app.use('/api/env', envRouter);
 
 // 确保脚本目录存在
 const SCRIPTS_DIR = path.join(__dirname, '../scripts');
@@ -99,6 +99,7 @@ function startScript(scriptName, schedule, scriptContent)
         const task = cron.schedule(schedule, () =>
         {
             console.log(`执行脚本: ${scriptName}`);
+            // 执行脚本
             try {
                 // 创建自定义console对象，将输出重定向到WebSocket
                 const customConsole = {
@@ -129,8 +130,11 @@ function startScript(scriptName, schedule, scriptContent)
                 };
                 const rootPath = path.join(__dirname, '../scripts');
                 const vm = new NodeVM({
-                    timeout: 5000, // 5秒超时
+                    timeout: 10000, // 10秒超时
                     console: 'redirect',
+                    env: {
+                        ...process.env,
+                    },
                     compiler: (code, filename) =>
                     {
                         // 使用 Babel 转译代码（支持 import/export）
@@ -150,11 +154,18 @@ function startScript(scriptName, schedule, scriptContent)
                         external: true,
                         context: 'host',
                         root: rootPath,
-                        resolve: (moduleName) => path.resolve(rootPath, 'node_modules', moduleName)
+                        resolve: (moduleName) =>
+                        {
+                            if (moduleName.includes("common")) {
+                                return path.resolve(rootPath, moduleName);
+                            }
+                            return path.resolve(rootPath, 'node_modules', moduleName);
+                        }
                     }
                 });
                 vm.on('console.log', (...message) =>
                 {
+                    console.log(message);
                     customConsole.log(message);
                 });
 
@@ -164,7 +175,10 @@ function startScript(scriptName, schedule, scriptContent)
                 });
 
                 // 执行脚本
-                vm.run(scriptContent);
+                vm.run(scriptContent).then(() =>
+                {
+                    res.json({ success: true, message: '脚本执行成功' });
+                });
             } catch (err) {
                 console.error(`执行脚本 ${scriptName} 时出错:`, err);
             }
@@ -494,8 +508,11 @@ app.post('/api/scripts/:name/run', async (req, res) =>
             };
             const rootPath = path.join(__dirname, '../scripts');
             const vm = new NodeVM({
-                timeout: 5000, // 5秒超时
+                timeout: 10000, // 10秒超时
                 console: 'redirect',
+                env: {
+                    ...process.env,
+                },
                 compiler: (code, filename) =>
                 {
                     // 使用 Babel 转译代码（支持 import/export）

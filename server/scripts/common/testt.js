@@ -10,8 +10,8 @@ import axios from 'axios';
 
 export default async function sendGotifyMessage(title, content)
 {
-  const gotifyUrl = 'https://gotify.xiaodibao.top/message'; // Gotify 服务器的 URL
-  const appToken = 'AY5x7owm11RRnoi'; // 替换为你的 Gotify 应用令牌
+  const gotifyUrl = 'https://gotify.xxx.xxx/message'; // Gotify 服务器的 URL
+  const appToken = 'xxxxx'; // 替换为你的 Gotify 应用令牌
   try {
     const response = await axios({
       method: 'post', // 指定请求方法为 POST

@@ -1,13 +1,13 @@
 /*
 {
-  "schedule": "0 3 * * *",
+  "schedule": "0 3 * * 5",
   "enabled": true,
   "name": "test.js"
 }
 */
 
 // 导入sendGotifyMessage函数
-import sendGotifyMessage from './common/testt';
+import sendGotifyMessage from 'common/testt';
 
 // 异步函数来发送消息
 async function main()
